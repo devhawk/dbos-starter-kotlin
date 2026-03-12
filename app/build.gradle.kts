@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
   implementation("io.javalin:javalin:7.0.1")
-  implementation("dev.dbos:transact:0.8.0-a50-gac2daeb")
+  implementation("dev.dbos:transact:0.8.0-a50-+")
   implementation("org.slf4j:slf4j-simple:2.0.17")
 
   testImplementation("org.jetbrains.kotlin:kotlin-test")
