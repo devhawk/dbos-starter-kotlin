@@ -8,7 +8,6 @@ import dev.dbos.transact.runStep
 import dev.dbos.transact.startWorkflow
 import dev.dbos.transact.workflow.Workflow
 import io.javalin.Javalin
-import java.nio.charset.StandardCharsets
 import java.time.Duration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -16,37 +15,6 @@ import org.slf4j.LoggerFactory
 private val logger: Logger = LoggerFactory.getLogger("DurableStarterApp")
 
 const val STEPS_EVENT = "steps_event"
-
-val indexHtmlContent: String by lazy { loadHtmlContent() }
-
-private fun loadHtmlContent(): String {
-  return try {
-    object {}.javaClass.getResourceAsStream("/index.html")?.use { stream ->
-      stream.readAllBytes().toString(StandardCharsets.UTF_8)
-    }
-      ?: run {
-        logger.error("HTML file not found")
-        """
-        <html>
-          <body>
-            <h1>Error: HTML file not found</h1>
-          </body>
-        </html>
-        """
-          .trimIndent()
-      }
-  } catch (e: Exception) {
-    logger.error("Error reading HTML file", e)
-    """
-    <html>
-      <body>
-        <h1>Error loading page</h1>
-      </body>
-    </html>
-    """
-      .trimIndent()
-  }
-}
 
 interface DurableStarterService {
   fun exampleWorkflow()
@@ -107,7 +75,10 @@ fun main(args: Array<String>) {
         config.startup.showJavalinBanner = false
         config.events.serverStarting { dbos.launch() }
         config.events.serverStopping { dbos.shutdown() }
-        config.routes.get("/") { ctx -> ctx.html(indexHtmlContent) }
+        config.routes.get("/") { ctx ->
+          ctx.contentType("text/html")
+          ctx.result(object {}.javaClass.getResourceAsStream("/index.html"))
+        }
         config.routes.get("/workflow/{taskId}") { ctx ->
           val taskId = ctx.pathParam("taskId")
           dbos.startWorkflow(StartWorkflowOptions(taskId)) { proxy.exampleWorkflow() }
