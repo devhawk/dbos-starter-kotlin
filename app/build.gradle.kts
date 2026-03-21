@@ -4,26 +4,33 @@ plugins {
   id("com.diffplug.spotless") version "8.3.0"
 }
 
-repositories {
-  // Use Maven Central for resolving dependencies.
-  mavenCentral()
-  mavenLocal()
-}
+repositories { mavenCentral() }
+
+configurations { create("mockitoAgent") }
 
 dependencies {
   implementation("io.javalin:javalin:7.0.1")
-  implementation("dev.dbos:transact:0.8.0-a50-+")
+  implementation("dev.dbos:transact:0.8.+")
   implementation("org.slf4j:slf4j-simple:2.0.17")
 
   testImplementation("org.jetbrains.kotlin:kotlin-test")
   testImplementation(libs.junit.jupiter.engine)
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
+
+  // Add ByteBuddy agent (required by Mockito for inline mocking)
+  add("mockitoAgent", "net.bytebuddy:byte-buddy-agent:1.17.7")
 }
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
 tasks.test {
+  // Configure Mockito agent to avoid self-attaching warnings
+  jvmArgs("-javaagent:${configurations["mockitoAgent"].asPath}")
+
+  // Suppress JVM warning about class data sharing when agents are loaded
+  jvmArgs("-Xshare:off")
+
   testLogging {
     // Show all test events
     events("passed", "skipped", "failed", "standardOut", "standardError")
